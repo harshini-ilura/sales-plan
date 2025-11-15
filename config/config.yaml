@@ -1,0 +1,36 @@
+# Apify Actor Configuration
+
+actors:
+  email_scraper:
+    id: "T1XDXWc1L92AfIJtd"
+    name: "Email Scraper (Verified Emails)"
+    default_params:
+      getEmails: true
+      includeRiskyEmails: true
+      maxResults: 100
+
+  phone_scraper:
+    id: "aihL2lJmGDt9XFCGg"
+    name: "Phone Number Scraper"
+    default_params:
+      companyTypes:
+        - "PRIVATE"
+      employeeSizeMin: 0
+      getEmails: true
+      includeRiskyEmails: true
+      maxResults: 100
+
+# API Configuration
+api:
+  base_url: "https://api.apify.com/v2"
+  timeout: 300  # seconds
+  poll_interval: 5  # seconds between status checks
+  max_retries: 3
+
+# Data Export Configuration
+export:
+  formats:
+    - json
+    - csv
+  default_format: json
+  output_directory: "data/exports"

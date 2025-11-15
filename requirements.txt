@@ -1,0 +1,16 @@
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+
+# Database dependencies
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Database drivers (choose based on your database)
+# SQLite is included with Python by default
+# psycopg2-binary>=2.9.9  # Uncomment for PostgreSQL
+# pymysql>=1.1.0  # Uncomment for MySQL
+
+# Optional: for enhanced functionality
+# pandas>=2.0.0  # Uncomment for advanced data manipulation
