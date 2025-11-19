@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Campaign Details{% endblock %}
+
+{% block content %}
+<h1>{{ stats.name }}</h1>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Recipients</h5>
+                <h2>{{ stats.total_recipients or 0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Emails Sent</h5>
+                <h2>{{ stats.emails_sent or 0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <h2>{{ stats.emails_pending or 0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Status</h5>
+                <h2><span class="badge bg-secondary">{{ stats.status }}</span></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Queue & Send Emails</h3>
+        
+        <!-- Queue Emails Form -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Step 1: Queue Emails</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/campaigns/{{ campaign.id }}/queue" class="mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="from_latest_run" name="from_latest_run">
+                                <label class="form-check-label" for="from_latest_run">
+                                    Queue from latest run only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="limit" class="form-label">Limit (optional)</label>
+                                <input type="number" class="form-control" id="limit" name="limit" value="100" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-info btn-lg w-100">
+                                <i class="bi bi-plus-circle"></i> Queue Emails
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> This adds emails to the queue with "pending" status. 
+                    Use "Send Emails" below to actually send them.
+                </small>
+            </div>
+        </div>
+
+        <!-- Send Emails Form -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-send"></i> Step 2: Send Pending Emails</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/campaigns/{{ campaign.id }}/send" class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="batch_size" class="form-label">Batch Size</label>
+                                <input type="number" class="form-control" id="batch_size" name="batch_size" value="10" min="1" max="50">
+                                <small class="form-text text-muted">Number of emails to send in this batch</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-send-fill"></i> Send {{ stats.emails_pending or 0 }} Pending Emails
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> 
+                    Emails will be sent using the provider configured for this campaign ({{ campaign.email_provider or 'SMTP' }}).
+                    Make sure your SMTP credentials are configured correctly.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Recent Queue Items</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Recipient Email</th>
+                    <th>Status</th>
+                    <th>Queued At</th>
+                    <th>Sent At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in queue_items %}
+                <tr>
+                    <td>{{ item.recipient_email }}</td>
+                    <td>
+                        {% if item.status == 'sent' %}
+                        <span class="badge bg-success">Sent</span>
+                        {% elif item.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% elif item.status == 'failed' %}
+                        <span class="badge bg-danger">Failed</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}</td>
+                    <td>{{ item.sent_at.strftime('%Y-%m-%d %H:%M') if item.sent_at else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No queue items yet. Queue emails to start sending.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="/campaigns" class="btn btn-secondary">Back to Campaigns</a>
+</div>
+{% endblock %}
+

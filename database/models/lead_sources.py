@@ -47,7 +47,7 @@ class LeadSource(BaseModel):
     confidence_score = Column(Integer, nullable=True)  # 0-100
 
     # Additional metadata
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column('metadata', JSON, nullable=True)  # Using 'metadata' as DB column name, 'meta_data' as Python attr
     notes = Column(Text, nullable=True)
 
     def __repr__(self):

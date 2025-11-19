@@ -49,7 +49,7 @@ class ApifySyncState(BaseModel):
     cost_usd = Column(String(20), nullable=True)
 
     # Additional metadata
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column('metadata', JSON, nullable=True)  # Using 'metadata' as DB column name, 'meta_data' as Python attr
 
     def __repr__(self):
         return f"<ApifySyncState(id={self.id}, run_id='{self.run_id}', status='{self.sync_status}')>"

@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.email_scraper import EmailScraper
 from src.phone_scraper import PhoneScraper
 from src.data_manager import DataManager
+from scripts.import_apify_leads import import_leads_to_database
 from dotenv import load_dotenv
 
 # Configure logging
@@ -117,10 +118,16 @@ Examples:
         help='Apify API token (overrides environment variable)'
     )
 
+    parser.add_argument(
+        '--save-to-db',
+        action='store_true',
+        help='Save results directly to database (in addition to files)'
+    )
+
     return parser.parse_args()
 
 
-def scrape_emails(args) -> List[dict]:
+def scrape_emails(args) -> tuple[List[dict], dict]:
     """Scrape emails using email scraper"""
     logger.info("=" * 60)
     logger.info("Starting EMAIL scraping")
@@ -145,14 +152,14 @@ def scrape_emails(args) -> List[dict]:
         for key, value in summary.items():
             logger.info(f"  {key}: {value}")
 
-        return results
+        return results, run_data
 
     except Exception as e:
         logger.error(f"Email scraping failed: {e}")
         raise
 
 
-def scrape_phones(args) -> List[dict]:
+def scrape_phones(args) -> tuple[List[dict], dict]:
     """Scrape phone numbers using phone scraper"""
     logger.info("=" * 60)
     logger.info("Starting PHONE NUMBER scraping")
@@ -176,7 +183,7 @@ def scrape_phones(args) -> List[dict]:
         for key, value in summary.items():
             logger.info(f"  {key}: {value}")
 
-        return results
+        return results, run_data
 
     except Exception as e:
         logger.error(f"Phone scraping failed: {e}")
@@ -204,13 +211,15 @@ def main():
     try:
         # Perform scraping based on type
         all_results = []
+        email_run_data = None
+        phone_run_data = None
 
         if args.type in ['email', 'both']:
-            email_results = scrape_emails(args)
+            email_results, email_run_data = scrape_emails(args)
             all_results.extend(email_results)
 
         if args.type in ['phone', 'both']:
-            phone_results = scrape_phones(args)
+            phone_results, phone_run_data = scrape_phones(args)
             if args.type == 'both':
                 # Merge with email results
                 all_results = data_manager.merge_datasets(
@@ -262,6 +271,52 @@ def main():
             logger.info(f"\nResults saved to:")
             logger.info(f"  JSON: {output_paths['json']}")
             logger.info(f"  CSV:  {output_paths['csv']}")
+
+        # Save to database if requested
+        if args.save_to_db:
+            logger.info("\n" + "=" * 60)
+            logger.info("Saving to database...")
+            logger.info("=" * 60)
+            
+            # Determine actor info
+            if args.type == 'email' or (args.type == 'both' and email_run_data):
+                actor_id = EmailScraper.ACTOR_ID
+                actor_name = "Apify Email Scraper"
+                run_data = email_run_data
+                scrape_params = {
+                    'locations': args.locations,
+                    'max_results': args.max_results,
+                    'industries': args.industries,
+                    'employee_min': args.employee_min,
+                    'employee_max': args.employee_max
+                }
+            else:
+                actor_id = PhoneScraper.ACTOR_ID
+                actor_name = "Apify Phone Scraper"
+                run_data = phone_run_data
+                scrape_params = {
+                    'locations': args.locations,
+                    'max_results': args.max_results,
+                    'industries': args.industries,
+                    'company_types': args.company_types,
+                    'employee_min': args.employee_min,
+                    'employee_max': args.employee_max
+                }
+            
+            # Import to database
+            import_stats = import_leads_to_database(
+                results=all_results,
+                run_data=run_data,
+                actor_id=actor_id,
+                actor_name=actor_name,
+                scrape_params=scrape_params
+            )
+            
+            logger.info("\nDatabase Import Summary:")
+            logger.info(f"  Total records: {import_stats['total']}")
+            logger.info(f"  Imported: {import_stats['imported']}")
+            logger.info(f"  Skipped (duplicates): {import_stats['skipped']}")
+            logger.info(f"  Errors: {import_stats['errors']}")
 
         # Print final summary
         logger.info("\n" + "=" * 60)

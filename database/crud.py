@@ -19,15 +19,21 @@ class LeadCRUD:
         session.add(lead)
         session.flush()
 
-        # Create event
-        EventCRUD.create_event(
-            session=session,
-            lead_id=lead.id,
-            event_type='created',
-            event_name='Lead Created',
-            event_description=f'Lead {lead.full_name or lead.email} created',
-            actor=kwargs.get('created_by')
-        )
+        # Create event (optional - don't fail if event creation fails)
+        try:
+            EventCRUD.create_event(
+                session=session,
+                lead_id=lead.id,
+                event_type='created',
+                event_name='Lead Created',
+                event_description=f'Lead {lead.full_name or lead.email} created',
+                actor=kwargs.get('created_by')
+            )
+        except Exception as e:
+            # Log but don't fail lead creation if event creation fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create event for lead {lead.id}: {e}")
 
         return lead
 

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Email Campaign Manager{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Campaigns</h5>
+                <h2>{{ total_campaigns }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Leads</h5>
+                <h2>{{ total_leads }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Emails Sent</h5>
+                <h2>{{ total_emails_sent }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Pending Emails</h5>
+                <h2>{{ pending_emails }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Recent Campaigns</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Recipients</th>
+                    <th>Sent</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for campaign in recent_campaigns %}
+                <tr>
+                    <td>{{ campaign.name }}</td>
+                    <td><span class="badge bg-secondary">{{ campaign.status }}</span></td>
+                    <td>{{ campaign.total_recipients }}</td>
+                    <td>{{ campaign.emails_sent }}</td>
+                    <td>{{ campaign.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="/campaigns/{{ campaign.id }}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <a href="/campaigns/create" class="btn btn-success btn-lg w-100">
+            <i class="bi bi-plus-circle"></i> Create Campaign
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/templates/create" class="btn btn-info btn-lg w-100">
+            <i class="bi bi-file-text"></i> Create Template
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/leads/import" class="btn btn-warning btn-lg w-100">
+            <i class="bi bi-upload"></i> Import Leads
+        </a>
+    </div>
+</div>
+{% endblock %}

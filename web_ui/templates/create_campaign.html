@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Create Email Campaign{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Create New Email Campaign</h1>
+                <a href="/campaigns" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Campaigns
+                </a>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" id="campaignForm">
+                <div class="row">
+                    <!-- Left Column: Campaign Details -->
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="bi bi-envelope"></i> Campaign Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="name" class="form-label fw-bold">Campaign Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-lg" id="name" name="name" required 
+                                               placeholder="e.g., Q4 Product Launch Campaign">
+                                        <small class="form-text text-muted">Give your campaign a descriptive name</small>
+                                    </div>
+
+                                    <div class="col-md-12 mb-3">
+                                        <label for="description" class="form-label fw-bold">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                                  placeholder="Brief description of this campaign's purpose and goals"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Content Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-file-text"></i> Email Content</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="template_id" class="form-label fw-bold">Email Template <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-lg" id="template_id" name="template_id" required>
+                                        <option value="">-- Select an email template --</option>
+                                        {% for template in templates %}
+                                        <option value="{{ template.id }}">
+                                            {{ template.name }} 
+                                            <span class="text-muted">({{ template.template_type }})</span>
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="bi bi-info-circle"></i> Templates contain your email subject and body. 
+                                        <a href="/templates/create" target="_blank">Create a new template</a> if needed.
+                                    </small>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Templates use variables like {{first_name}}, {{company_name}} that are automatically replaced with lead information.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sender Configuration -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Sender Configuration</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="sender_email" class="form-label fw-bold">Sender Email Address <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="sender_email" name="sender_email" required 
+                                               placeholder="ilura.ai.tech@gmail.com">
+                                        <small class="form-text text-muted">The email address that will send the campaign</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="sender_name" class="form-label fw-bold">Sender Name</label>
+                                        <input type="text" class="form-control" id="sender_name" name="sender_name" 
+                                               placeholder="e.g., Ilura AI Team">
+                                        <small class="form-text text-muted">Display name shown to recipients</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="reply_to" class="form-label fw-bold">Reply-To Email</label>
+                                        <input type="email" class="form-control" id="reply_to" name="reply_to" 
+                                               placeholder="support@ilura.ai">
+                                        <small class="form-text text-muted">Where replies should be sent (optional)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Provider Configuration -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-gear"></i> Email Provider Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="email_provider" class="form-label fw-bold">Email Provider <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="email_provider" name="email_provider" required>
+                                        <option value="smtp" selected>SMTP (Gmail, Outlook, Custom)</option>
+                                        <option value="sendgrid">SendGrid</option>
+                                        <option value="aws_ses">AWS SES</option>
+                                    </select>
+                                    <small class="form-text text-muted">Choose how emails will be sent</small>
+                                </div>
+
+                                <!-- SMTP Configuration -->
+                                <div id="smtp_config" class="provider-config">
+                                    <h6 class="mt-3 mb-3">SMTP Configuration</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_host" class="form-label">SMTP Host</label>
+                                            <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
+                                                   placeholder="smtp.gmail.com" value="smtp.gmail.com">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_port" class="form-label">SMTP Port</label>
+                                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                                   placeholder="587" value="587">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_username" class="form-label">SMTP Username</label>
+                                            <input type="email" class="form-control" id="smtp_username" name="smtp_username" 
+                                                   placeholder="your-email@gmail.com">
+                                            <small class="form-text text-muted">Usually your email address</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_password" class="form-label">SMTP Password</label>
+                                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                                   placeholder="App Password or regular password">
+                                            <small class="form-text text-muted">
+                                                For Gmail, use an <a href="https://myaccount.google.com/apppasswords" target="_blank">App Password</a>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SendGrid Configuration -->
+                                <div id="sendgrid_config" class="provider-config" style="display: none;">
+                                    <h6 class="mt-3 mb-3">SendGrid Configuration</h6>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i> SendGrid API key should be set in environment variable <code>SENDGRID_API_KEY</code>
+                                    </div>
+                                </div>
+
+                                <!-- AWS SES Configuration -->
+                                <div id="aws_ses_config" class="provider-config" style="display: none;">
+                                    <h6 class="mt-3 mb-3">AWS SES Configuration</h6>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i> AWS credentials should be set in environment variables <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attachments -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0"><i class="bi bi-paperclip"></i> Email Attachments</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="attachments" class="form-label fw-bold">Attach Files</label>
+                                    <input type="file" class="form-control" id="attachments" name="attachments" multiple 
+                                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.zip">
+                                    <small class="form-text text-muted">
+                                        You can attach multiple files (PDFs, images, documents). Maximum 25MB per file.
+                                    </small>
+                                </div>
+                                <div id="file-list" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Targeting & Settings -->
+                    <div class="col-lg-4">
+                        <!-- Target Filters -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0"><i class="bi bi-funnel"></i> Target Filters</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="filter_country" class="form-label fw-bold">Country</label>
+                                    <input type="text" class="form-control" id="filter_country" name="filter_country" 
+                                           placeholder="e.g., India, USA">
+                                    <small class="form-text text-muted">Filter leads by country (optional)</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="filter_source" class="form-label fw-bold">Lead Source</label>
+                                    <select class="form-select" id="filter_source" name="filter_source">
+                                        <option value="">All sources</option>
+                                        <option value="apify">Apify</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="import">Import</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="filter_industry" class="form-label fw-bold">Industry</label>
+                                    <input type="text" class="form-control" id="filter_industry" name="filter_industry" 
+                                           placeholder="e.g., Software, Technology">
+                                    <small class="form-text text-muted">Filter by industry (optional)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Follow-up Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="bi bi-arrow-repeat"></i> Follow-up Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="follow_up_enabled" name="follow_up_enabled">
+                                    <label class="form-check-label fw-bold" for="follow_up_enabled">
+                                        Enable Automatic Follow-ups
+                                    </label>
+                                </div>
+
+                                <div id="follow_up_settings" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="follow_up_delay_days" class="form-label">Follow-up After (days)</label>
+                                        <input type="number" class="form-control" id="follow_up_delay_days" name="follow_up_delay_days" 
+                                               value="3" min="1" max="30">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="follow_up_template_id" class="form-label">Follow-up Template</label>
+                                        <select class="form-select" id="follow_up_template_id" name="follow_up_template_id">
+                                            <option value="">Select follow-up template...</option>
+                                            {% for template in templates %}
+                                            {% if template.template_type == 'follow_up' %}
+                                            <option value="{{ template.id }}">{{ template.name }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campaign Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-sliders"></i> Campaign Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="send_rate_limit" class="form-label fw-bold">Send Rate Limit</label>
+                                    <input type="number" class="form-control" id="send_rate_limit" name="send_rate_limit" 
+                                           value="100" min="1" max="1000">
+                                    <small class="form-text text-muted">Emails per hour (to avoid spam filters)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <a href="/campaigns" class="btn btn-lg btn-outline-secondary">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-lg btn-primary">
+                                        <i class="bi bi-check-circle"></i> Create Campaign
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide provider-specific configuration
+document.getElementById('email_provider').addEventListener('change', function() {
+    const provider = this.value;
+    document.querySelectorAll('.provider-config').forEach(el => el.style.display = 'none');
+    document.getElementById(provider + '_config').style.display = 'block';
+});
+
+// Show/hide follow-up settings
+document.getElementById('follow_up_enabled').addEventListener('change', function() {
+    document.getElementById('follow_up_settings').style.display = this.checked ? 'block' : 'none';
+});
+
+// File list preview
+document.getElementById('attachments').addEventListener('change', function(e) {
+    const fileList = document.getElementById('file-list');
+    fileList.innerHTML = '';
+    if (e.target.files.length > 0) {
+        const ul = document.createElement('ul');
+        ul.className = 'list-group';
+        Array.from(e.target.files).forEach(file => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <span><i class="bi bi-file-earmark"></i> ${file.name}</span>
+                <span class="badge bg-primary rounded-pill">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+            `;
+            ul.appendChild(li);
+        });
+        fileList.appendChild(ul);
+    }
+});
+</script>
+
+<style>
+.provider-config {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-top: 1rem;
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.form-label.fw-bold {
+    color: #495057;
+}
+</style>
+{% endblock %}

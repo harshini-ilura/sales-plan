@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Import Leads{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Import Leads from CSV</h1>
+                <a href="/leads" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Leads
+                </a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-upload"></i> Upload CSV File</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="file" class="form-label fw-bold">CSV File <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control form-control-lg" id="file" name="file" 
+                                           accept=".csv,.txt" required>
+                                    <small class="form-text text-muted">
+                                        Upload a CSV file with lead information. Maximum file size: 10MB
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="source_name" class="form-label fw-bold">Source Name</label>
+                                    <input type="text" class="form-control" id="source_name" name="source_name" 
+                                           value="CSV Import" placeholder="e.g., LinkedIn Export, Manual Entry">
+                                    <small class="form-text text-muted">Name to identify where these leads came from</small>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="skip_duplicates" 
+                                           name="skip_duplicates" checked>
+                                    <label class="form-check-label fw-bold" for="skip_duplicates">
+                                        Skip Duplicate Emails
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        If checked, leads with existing email addresses will be skipped
+                                    </small>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <a href="/leads" class="btn btn-lg btn-outline-secondary">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-lg btn-primary">
+                                        <i class="bi bi-upload"></i> Import Leads
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-info-circle"></i> CSV Format Guide</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="fw-bold">Required Columns:</p>
+                            <ul class="small">
+                                <li><code>email</code> or <code>email_address</code> - <span class="text-danger">Required</span></li>
+                            </ul>
+
+                            <p class="fw-bold mt-3">Optional Columns:</p>
+                            <ul class="small">
+                                <li><code>name</code> or <code>full_name</code> - Contact name</li>
+                                <li><code>first_name</code> - First name</li>
+                                <li><code>last_name</code> - Last name</li>
+                                <li><code>phone</code> or <code>phone_number</code> - Phone number</li>
+                                <li><code>company</code> or <code>company_name</code> - Company name</li>
+                                <li><code>domain</code> or <code>website</code> - Company website</li>
+                                <li><code>city</code> or <code>location</code> - City</li>
+                                <li><code>country</code> - Country</li>
+                                <li><code>state</code> or <code>province</code> - State/Province</li>
+                                <li><code>industry</code> or <code>sector</code> - Industry</li>
+                                <li><code>title</code> or <code>position</code> - Job title</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet"></i> Example CSV</h5>
+                        </div>
+                        <div class="card-body">
+                            <pre class="bg-light p-3 rounded small"><code>email,first_name,last_name,company_name,phone,city,country
+john@example.com,John,Doe,Example Corp,+1234567890,New York,USA
+jane@company.com,Jane,Smith,Company Inc,+9876543210,London,UK</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Tips</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="small mb-0">
+                                <li>CSV files can use comma or semicolon delimiters</li>
+                                <li>First row should contain column headers</li>
+                                <li>Column names are case-insensitive</li>
+                                <li>Empty rows are automatically skipped</li>
+                                <li>Rows without email addresses are skipped</li>
+                                <li>Duplicate emails are skipped by default</li>
+                                <li>Check server logs if import fails</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
